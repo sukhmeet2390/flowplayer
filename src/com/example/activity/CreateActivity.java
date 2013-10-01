@@ -1,7 +1,9 @@
 package com.example.activity;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -17,6 +19,10 @@ import com.example.database.ContentProvider.GigContentProvider;
 import com.example.model.DragRectView;
 import com.example.model.HotSpotRectangle;
 import com.example.model.ViewScreen;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.util.Arrays;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,26 +35,59 @@ public class CreateActivity extends Activity {
     private static final String TAG = "CreateGig";
 
     private ImageView imageView;
-    Uri parentImage, currentImage, childImage;
+    Uri currentImage, childImage;
     String gigName;
     DbQueryActivity queries;
+    String[] parentStack;
+
+    @Override
+    public void onBackPressed() {
+        if (currentImage != null) {
+            getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), -1, -1, -1, -1));
+        }
+
+        childImage = Uri.parse("null");
+
+        String[] newArr = Arrays.copyOfRange(parentStack, 1, parentStack.length);
+
+        Gson gson = new Gson();
+        String value = gson.toJson(newArr);
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putString("list", value);
+        e.commit();
+
+        super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
+    }
 
     public void onCreate(Bundle savedInstanceState) {
+        Log.e(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.create);
 
         Bundle extras = getIntent().getExtras();
         initVariables();
         gigName = extras.getString("name");
-        String check = extras.getString("parentImage");
-
-        parentImage = Uri.parse(check);
-
-
-        imageView = (ImageView) findViewById(R.id.imageDisplay);
 
     }
 
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "On pause");
+        super.onPause();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void onResume() {
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
+        String value = prefs.getString("list", null);
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        Gson gson = gsonBuilder.create();
+        parentStack = gson.fromJson(value, String[].class);
+
+        Log.d(TAG, "On resume");
+        super.onResume();
+    }
 
     public void onUploadButtonClick(View view) {
         Log.d(TAG, "Upload Button Click");
@@ -64,11 +103,24 @@ public class CreateActivity extends Activity {
         int y1 = (int) coordinates[1];
         int x2 = (int) coordinates[2];
         int y2 = (int) coordinates[3];
-        getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentImage.toString(), childImage.toString(), x1, y1, x2, y2));
+        getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), x1, y1, x2, y2));
 
         Intent createActivity = new Intent(this, CreateActivity.class);
         createActivity.putExtra("name", gigName);
-        createActivity.putExtra("parentImage", currentImage.toString());
+
+        String[] newArr = com.example.Util.concat(new String[]{currentImage.toString()}, parentStack);
+        Gson gson = new Gson();
+        String value = gson.toJson(newArr);
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putString("list", value);
+        e.commit();
+
+
+        Bundle b = new Bundle();
+        String[] arr = com.example.Util.concat(new String[]{currentImage.toString()}, parentStack);
+        b.putStringArray("myList", arr);
+        createActivity.putExtras(b);
         startActivity(createActivity);
     }
 
@@ -87,9 +139,12 @@ public class CreateActivity extends Activity {
 
     public void onFinishButtonClicked(View view) {
         Log.d(TAG, "Finish Button Clicked");
-        getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentImage.toString(), childImage.toString(), -1, -1, -1, -1));
+        if (currentImage != null) {
+            getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), -1, -1, -1, -1));
+        }
+
         Intent mainActivity = new Intent(this, MainActivity.class);
-        startActivity(mainActivity );
+        startActivity(mainActivity);
 
 
     }
@@ -104,16 +159,8 @@ public class CreateActivity extends Activity {
 
         currentImage = userSelectedImage;
         childImage = Uri.parse("null");
-        queries.updateChildImage(currentImage.toString(), parentImage.toString(), gigName);
+        queries.updateChildImage(currentImage.toString(), parentStack[0], gigName);
 
-
-    }
-
-
-    private void updateChildrenForParent() {
-
-
-        //currentScreen.currentImage = userSelectedImage;
 
     }
 
@@ -163,9 +210,9 @@ public class CreateActivity extends Activity {
 
     private void initVariables() {
         queries = new DbQueryActivity(getApplicationContext());
-        parentImage = null;
         currentImage = null;
         gigName = null;
+        imageView = (ImageView) findViewById(R.id.imageDisplay);
 
     }
 
