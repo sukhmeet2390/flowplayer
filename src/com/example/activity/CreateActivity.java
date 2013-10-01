@@ -66,7 +66,6 @@ public class CreateActivity extends Activity {
         int y2 = (int) coordinates[3];
         getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentImage.toString(), childImage.toString(), x1, y1, x2, y2));
 
-        parentImage = currentImage;
         Intent createActivity = new Intent(this, CreateActivity.class);
         createActivity.putExtra("name", gigName);
         createActivity.putExtra("parentImage", currentImage.toString());
@@ -88,6 +87,10 @@ public class CreateActivity extends Activity {
 
     public void onFinishButtonClicked(View view) {
         Log.d(TAG, "Finish Button Clicked");
+        getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentImage.toString(), childImage.toString(), -1, -1, -1, -1));
+        Intent mainActivity = new Intent(this, MainActivity.class);
+        startActivity(mainActivity );
+
 
     }
 
