@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/dialog_edit_name"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="center"
+              android:orientation="vertical"
+        >
+    <TextView
+            android:id="@+id/dialog_TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name your gig "
+            ></TextView>
+    <EditText
+            android:id="@+id/dialog_text"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:inputType="text"
+            android:imeOptions="actionDone"
+            >
+        <requestFocus/>
+    </EditText>
+
+</LinearLayout>
+
+        <!--http://android-developers.blogspot.in/2012/05/using-dialogfragments.html-->
