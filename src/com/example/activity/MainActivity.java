@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 import com.example.R;
+import com.example.database.ContentProvider.GigContentProvider;
 import com.example.widgets.EditNameDialog;
 
 public class MainActivity extends Activity implements EditNameDialog.EditNameDialogListener{
@@ -38,8 +39,13 @@ public class MainActivity extends Activity implements EditNameDialog.EditNameDia
             case R.id.createGig:
                 Log.i(TAG, "Create Gig Click");
                 showDialog();
+                break;
+            case R.id.home_search:
+                Log.i(TAG,"Search Click");
+                break;
+
         }
-        return super.onOptionsItemSelected(item);    //To change body of overridden methods use File | Settings | File Templates.
+        return super.onOptionsItemSelected(item);
     }
 
     private void showDialog() {
@@ -52,15 +58,14 @@ public class MainActivity extends Activity implements EditNameDialog.EditNameDia
     @Override
     public void onFinishEditDialog(String inputText) {
 
-        //To change body of implemented methods use File | Settings | File Templates.
-        //getContentResolver().insert(GigNameContentProvider.NAME_URI, com.example.Utility.Helper.nameToContentValues(inputData));
+        getContentResolver().insert(GigContentProvider.NAME_URI, com.example.Util.nameToContentValues(inputText));
         Toast.makeText(getApplicationContext(), "Welcome ! " + inputText + " Created, start adding ", Toast.LENGTH_LONG).show();
         Log.d(TAG,"Created Gig "+ inputText);
 
-        //Intent createIntent = new Intent(this, CreateGig.class);
-        //createIntent.putExtra("name", inputData);
-        //createIntent.putExtra("isFirstImage", "true");
-        //startActivity(createIntent);
+        Intent createIntent = new Intent(this, CreateActivity.class);
+        createIntent.putExtra("name", inputText);
+        createIntent.putExtra("parentImage", "null");
+        startActivity(createIntent);
     }
 
     @Override

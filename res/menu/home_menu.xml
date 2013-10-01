@@ -9,6 +9,7 @@
     <item   android:icon="@android:drawable/ic_menu_search"
             android:title="Search"
             android:showAsAction="ifRoom"
+            android:id="@+id/home_search"
 
             />
 </menu>
