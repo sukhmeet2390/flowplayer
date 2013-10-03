@@ -1,6 +1,7 @@
 package com.example.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -66,7 +67,9 @@ public class PlayGigActivity extends Activity {
     public void onBackPressed() {
         Log.d(TAG, "Back button pressed");
         if (backScreenStack.size() == 0) {
-            super.onBackPressed();
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
             return;
         }
         currentScreen = backScreenStack.pop();

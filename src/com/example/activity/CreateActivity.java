@@ -141,6 +141,7 @@ public class CreateActivity extends Activity {
         }
 
         Intent mainActivity = new Intent(this, MainActivity.class);
+        mainActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(mainActivity);
 
 
