@@ -20,7 +20,8 @@ public class HotSpotRectangle {
     }
 
     public HotSpotRectangle(float x1, float y1, float x2, float y2, Uri gotoImage) {
-
+        this.rectangle = new Rectangle(x1,x2,y1,y2);
+        this.gotoImage = gotoImage;
     }
 
     public Rectangle getRectangle() {

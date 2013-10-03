@@ -6,8 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -17,11 +15,11 @@ import android.widget.ImageView;
 import com.example.R;
 import com.example.database.ContentProvider.GigContentProvider;
 import com.example.model.DragRectView;
-import com.example.model.HotSpotRectangle;
-import com.example.model.ViewScreen;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -72,12 +70,6 @@ public class CreateActivity extends Activity {
     }
 
     @Override
-    protected void onPause() {
-        Log.d(TAG, "On pause");
-        super.onPause();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    @Override
     protected void onResume() {
         SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
         String value = prefs.getString("list", null);
@@ -98,11 +90,13 @@ public class CreateActivity extends Activity {
     public void onNextButtonClicked(View view) {
         Log.d(TAG, "Next Button Clicked");
 
-        float[] coordinates = getTransformedCordinates(R.id.imageDisplay);
+        float[] coordinates = getTransformedCordinates();
+
         int x1 = (int) coordinates[0];
         int y1 = (int) coordinates[1];
         int x2 = (int) coordinates[2];
         int y2 = (int) coordinates[3];
+
         getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), x1, y1, x2, y2));
 
         Intent createActivity = new Intent(this, CreateActivity.class);
@@ -124,14 +118,17 @@ public class CreateActivity extends Activity {
         startActivity(createActivity);
     }
 
-    private float[] getTransformedCordinates(int viewId) {
+    private float[] getTransformedCordinates() {
 
-        int x1 = ((DragRectView) findViewById(viewId)).getStartX();
-        int x2 = ((DragRectView) findViewById(viewId)).getEndX();
-        int y1 = ((DragRectView) findViewById(viewId)).getStartY();
-        int y2 = ((DragRectView) findViewById(viewId)).getEndY();
-        float[] startCord = transformCoordinates(x1, y1, viewId);
-        float[] endCord = transformCoordinates(x2, y2, viewId);
+
+        int x1 = ((DragRectView) imageView).getStartX();
+        int x2 = ((DragRectView) imageView).getEndX();
+        int y1 = ((DragRectView) imageView).getStartY();
+        int y2 = ((DragRectView) imageView).getEndY();
+
+        float[] startCord = com.example.Util.transformCoordinates(x1, y1, imageView);
+        float[] endCord = com.example.Util.transformCoordinates(x2, y2, imageView);
+
         float[] coordinates = new float[]{startCord[0], startCord[1], endCord[0], endCord[1]};
         return coordinates;
 
@@ -154,8 +151,15 @@ public class CreateActivity extends Activity {
         if (resultCode != Activity.RESULT_OK) return;
         Uri userSelectedImage = data.getData();
         String userSelectedImagePath = getPath(userSelectedImage);
-        Bitmap userSelectedBitMap = decodeSampledBitmap(userSelectedImagePath, imageView.getMeasuredWidth(), imageView.getMeasuredHeight());
-        imageView.setImageBitmap(userSelectedBitMap);
+        InputStream is = null;
+        try{
+            is = getApplicationContext().getContentResolver().openInputStream(userSelectedImage);
+
+        }catch (IOException e){
+            Log.e("TAG" ,"error while opening file"+userSelectedImagePath);
+        }
+        Bitmap bitmap = com.example.Util.decodeSampledBitmapFromStream(is, imageView.getWidth(),imageView.getHeight());
+        imageView.setImageBitmap(bitmap);
 
         currentImage = userSelectedImage;
         childImage = Uri.parse("null");
@@ -186,27 +190,6 @@ public class CreateActivity extends Activity {
         return cursor.getString(column_index);
     }
 
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-
-            // Calculate ratios of height and width to requested height and width
-            final int heightRatio = Math.round((float) height / (float) reqHeight);
-            final int widthRatio = Math.round((float) width / (float) reqWidth);
-
-            // Choose the smallest ratio as inSampleSize value, this will guarantee
-            // a final image with both dimensions larger than or equal to the
-            // requested height and width.
-            inSampleSize = heightRatio < widthRatio ? heightRatio : widthRatio;
-        }
-
-        return inSampleSize;
-    }
-
 
     private void initVariables() {
         queries = new DbQueryActivity(getApplicationContext());
@@ -216,34 +199,5 @@ public class CreateActivity extends Activity {
 
     }
 
-    public Bitmap decodeSampledBitmap(String path, int screenWidth, int screenHeight) {
-        //screenWidth = dragWidth;
-        //screenHeight = dragHeight;
-        Log.d(TAG, " screen width " + screenWidth + " screen Height" + screenHeight);
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
 
-        int inSampleSize = calculateInSampleSize(options, screenWidth, screenHeight);
-
-        options.inJustDecodeBounds = false;
-        options.inDither = false;
-        options.inSampleSize = inSampleSize;
-        options.inScaled = false;
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-        return BitmapFactory.decodeFile(path, options);
-
-    }
-
-    public float[] transformCoordinates(float x, float y, int viewId) {
-        float[] coordinates = new float[]{x, y};
-        Matrix matrix = new Matrix();
-        DragRectView imageView = ((DragRectView) findViewById(viewId));
-        imageView.getImageMatrix().invert(matrix); // Inside a class that extends ImageView. Hence this->ImageView
-        matrix.postTranslate(imageView.getScrollX(), imageView.getScrollY());
-        matrix.mapPoints(coordinates);
-        return coordinates;
-
-    }
 }

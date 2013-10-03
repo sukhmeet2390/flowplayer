@@ -3,144 +3,228 @@ package com.example.model;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.ImageView;
 
-/**
- * Created with IntelliJ IDEA.
- * User: sukhmeet
- * Date: 13/09/13
- * Time: 5:56 PM
- * To change this template use File | Settings | File Templates.
- */
+
 public class DragRectView extends ImageView {
 
-    private Paint paintRectangle;
-    private int startX = 0;
-    private int startY = 0;
-    private int endX = 0;
-    private int endY = 0;
-    private String MODE;
-    private int startDragX, startDragY;
+    public int startX, startY, endX, endY;
+    public float startDragX, dragX, startDragY, dragY;
 
-    private int color = Color.CYAN;
-    private int endDragX, endDragY;
-    private boolean DRAWN_RECT;
+    Paint paint = new Paint();
+
+    public static int DRAG = 0;
+    public static int DRAW = 1;
+    public static int EXPAND = 2;
+    public static int EXPAND_TYPE = 0;
+    public static int BORDER = 0;
+    public static int CORNER = 1;
+    public static int CURRENT_MODE = DRAG;
+    public static int MINIMUM_DISTANCE = 20;
+    public static int EXPAND_BORDER = 0;
+    public static int EXPAND_CORNER = 0;
+    public static int CIRCLE_RADIUS = 5;
+    public static boolean SELECTION_COMPLETE = false;
 
 
-    public DragRectView(Context context) {
+    public DragRectView(Context context, int startX) {
         super(context);
-        init();
+        this.startX = startX;
     }
 
     public DragRectView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
         init();
+
     }
 
     public DragRectView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init();
-    }
-
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        if (!DRAWN_RECT)
-            canvas.drawRect(Math.min(startX, endX), Math.min(startY, endY), Math.max(endX, startX), Math.max(endY, startY), paintRectangle);
-
-
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getAction()) {
-            case MotionEvent.ACTION_DOWN:
-                Log.d("ACTION DOWN x", "x" + event.getX());
-                Log.d("ACTION DOWN y", "y" + event.getY());
-                int x = (int) event.getX();
-                int y = (int) event.getY();
-                if (touchedInside(x, y)) {
-
-                    MODE = "MOVE";
-                    startDragX = startX;
-                    startDragY = startY;
-
-                    break;
-                } else {
-                    startX = (int) event.getX();
-                    startY = (int) event.getY();
-                    DRAWN_RECT = false;
-                    invalidate();
-                }
-                break;
-            case MotionEvent.ACTION_MOVE:
-                if (MODE == "MOVE") {
-                    int dragDistanceX = (int) event.getX() - startDragX;
-                    int dragDistanceY = (int) event.getY() - startDragY;
-
-                    startX = startX + dragDistanceX;
-                    startY = startY + dragDistanceY;
-                    endX = endX + dragDistanceX;
-                    endY = endY + dragDistanceY;
-
-                    startDragX = (int) event.getX();
-                    startDragY = (int) event.getY();
-
-                    DRAWN_RECT = false;
-
-                } else {
-                    endX = (int) event.getX();
-                    endY = (int) event.getY();
-                }
-                invalidate();
-                break;
-            case MotionEvent.ACTION_UP:
-
-                System.out.println("Draw Rect x action UP");
-                System.out.println("Draw Rect x " + startX);
-                System.out.println("Draw Rect y " + startY);
-                System.out.println("Draw Rect x2 " + endX);
-                System.out.println("Draw Rect y2 " + endY);
-                DRAWN_RECT = true;
-                //invalidate();
-
-                break;
-        }
-        return true;
     }
 
     public int getStartX() {
         return startX;
     }
 
-    public int getStartY() {
-        return startY;
-    }
 
     public int getEndX() {
         return endX;
     }
 
+
+    public int getStartY() {
+        return startY;
+    }
+
+
     public int getEndY() {
         return endY;
     }
 
-    private void init() {
-        paintRectangle = new Paint();
-        paintRectangle.setColor(color);
-        paintRectangle.setStyle(Paint.Style.FILL);
-        paintRectangle.setStrokeWidth(10);
-        paintRectangle.setAlpha(125);
-        DRAWN_RECT = false;
+    @Override
+    public boolean onTouchEvent(final MotionEvent event) {
+        try{
+            switch(event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+
+                    float [] coordinates = new float[]{event.getX(), event.getY()};
+                    Matrix matrix = new Matrix();
+                    this.getImageMatrix().invert(matrix);
+                    matrix.postTranslate(this.getScrollX(), this.getScrollY());
+                    matrix.mapPoints(coordinates);
+
+                    SELECTION_COMPLETE = false;
+                    if(onTouchCorner(event.getX(), event.getY())) {
+                        CURRENT_MODE = EXPAND;
+                        EXPAND_TYPE = CORNER;
+                        break;
+                    }
+
+                    if(touchedInside(event.getX(), event.getY())) {
+                        CURRENT_MODE = DRAG;
+                        startDragX = (int) event.getX();
+                        startDragY = (int) event.getY();
+                        break;
+                    }
+                    CURRENT_MODE = DRAW;
+                    startX = (int) event.getX();
+                    startY = (int) event.getY();
+                    endX = (int) event.getX();
+                    endY = (int) event.getY();
+                    invalidate();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    if(CURRENT_MODE != EXPAND && ((distance(event.getX(), event.getY(), startX, startY) < MINIMUM_DISTANCE) ||
+                            (Math.abs(startX - event.getX()) < MINIMUM_DISTANCE) ||
+                            (Math.abs(startY- event.getY()) < MINIMUM_DISTANCE)
+                    )) {
+                        SELECTION_COMPLETE = false;
+                        invalidate();
+                        break;
+                    }
+                    SELECTION_COMPLETE = true;
+                    if(CURRENT_MODE == DRAG) {
+                        dragX = (int) event.getX()-startDragX;
+                        dragY = (int) event.getY()-startDragY;
+                        startDragX = (int) event.getX();
+                        startDragY = (int) event.getY();
+                        endX += dragX;
+                        startX += dragX;
+                        startY += dragY;
+                        endY += dragY;
+                    }
+                    else if(CURRENT_MODE == DRAW) {
+                        endX = (int) event.getX();
+                        endY = (int) event.getY();
+                    }
+                    else if(CURRENT_MODE == EXPAND) {
+                        if(EXPAND_TYPE == CORNER) {
+                            if(EXPAND_CORNER == 0) {
+                                if(startX < endX) startX = (int)event.getX();
+                                else endX = (int)event.getX();
+                                if(startY < endY) startY = (int)event.getY();
+                                else endY = (int)event.getY();
+                            }
+                            else if(EXPAND_CORNER == 1) {
+                                if(startX > endX) startX = (int)event.getX();
+                                else endX = (int) event.getX();
+                                if(startY < endY) startY = (int) event.getY();
+                                else endY = (int) event.getY();
+                            }
+                            else if(EXPAND_CORNER == 2) {
+                                if(startX > endX) startX = (int) event.getX();
+                                else endX = (int) event.getX();
+                                if(startY > endY) startY = (int) event.getY();
+                                else endY = (int)event.getY();
+                            }
+                            else if(EXPAND_CORNER == 3) {
+                                if(startX < endX) startX = (int)event.getX();
+                                else endX =(int) event.getX();
+                                if(startY > endY) startY = (int)event.getY();
+                                else endY = (int)event.getY();
+                            }
+                        }
+                    }
+                    invalidate();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    SELECTION_COMPLETE = true;
+
+                    break;
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+
+        }
+        return true;
     }
 
-    private boolean touchedInside(int x, int y) {
-        return (x > Math.min(startX, endX) && x < Math.max(startX, endX)
-                && y > Math.min(startY, endY) && y < Math.max(startY, endY));
+    private boolean touchedInside(float x, float y) {
+        return x < Math.max(startX, endX) && x > Math.min(startX, endX) && y < Math.max(startY, endY) && y > Math.min(startY, endY);
+    }
+
+
+    private boolean onTouchCorner(float x, float y) {
+        if(detectCorner(x, y, Math.min(startX, endX), Math.min(startY, endY))) { // Top left corner
+            EXPAND_CORNER = 0;
+            return true;
+        }
+        if(detectCorner(x, y, Math.max(startX, endX), Math.min(startY, endY))) { //Top right corner
+            EXPAND_CORNER = 1;
+            return true;
+        }
+        if(detectCorner(x, y, Math.max(startX, endX), Math.max(startY, endY))) {//Bottom right corner
+            EXPAND_CORNER = 2;
+            return true;
+        }
+        if(detectCorner(x, y, Math.min(startX, endX), Math.max(startY, endY))) { //Bottom left corner
+            EXPAND_CORNER = 3;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean detectCorner(float x1, float y1, float x2, float y2) {
+        return distance(x1, y1, x2, y2) <= MINIMUM_DISTANCE;
+    }
+
+    private float distance(float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt(((x2-x1)*(x2-x1)) + ((y2-y1)*(y2-y1)));
+    }
+
+
+
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        if(SELECTION_COMPLETE) {
+            canvas.drawRect(Math.min(startX, endX), Math.min(startY, endY), Math.max(startX, endX), Math.max(startY, endY), paint);
+
+        }
+    }
+    private void init(){
+        DRAW = 1;
+        DRAG = 0;
+        EXPAND = 2;
+        EXPAND_TYPE = 0;
+        BORDER = 0;
+        CORNER = 1;
+        CURRENT_MODE = DRAG;
+        MINIMUM_DISTANCE = 20;
+        EXPAND_BORDER = 0;
+        EXPAND_CORNER = 0;
+
+        CIRCLE_RADIUS = 5;
+        SELECTION_COMPLETE = false;
+        paint.setColor(Color.rgb(87,151,238));
+        paint.setStyle(Paint.Style.FILL);
+        paint.setStrokeWidth(10);
+        paint.setAlpha(125);
     }
 }
+// Source GIT HUB Libraries

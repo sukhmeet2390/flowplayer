@@ -2,34 +2,39 @@ package com.example.activity;
 
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.SearchView;
-import android.widget.Toast;
+import android.widget.*;
 import com.example.R;
+import com.example.database.ContentProvider.DbHelper;
 import com.example.database.ContentProvider.GigContentProvider;
 import com.example.widgets.EditNameDialog;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
-public class MainActivity extends Activity implements EditNameDialog.EditNameDialogListener, SearchView.OnQueryTextListener{
+public class MainActivity extends ListActivity implements EditNameDialog.EditNameDialogListener, SearchView.OnQueryTextListener{
     /**
      * Called when the activity is first created.
      */
     private String TAG = "MAIN ACTIVITY";
+    static final String[] FROM = {DbHelper.C_NAME};
+    static final int[] TO = {R.id.gig_list_name};
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        displayItems("");
     }
 
     @Override
@@ -68,6 +73,14 @@ public class MainActivity extends Activity implements EditNameDialog.EditNameDia
 
 
     @Override
+    protected void onListItemClick(ListView l, View v, int position, long id) {
+        Log.d(TAG, "ITEM CLICK");
+        Intent playIntent = new Intent(this, PlayGigActivity.class);
+        playIntent.putExtra("gig_id", (long) id);
+        startActivity(playIntent);
+    }
+
+    @Override
     public void onFinishEditDialog(String inputText) {
 
         getContentResolver().insert(GigContentProvider.NAME_URI, com.example.Util.nameToContentValues(inputText));
@@ -79,8 +92,6 @@ public class MainActivity extends Activity implements EditNameDialog.EditNameDia
         createIntent.putExtra("parentImage", "null");
 
         String[] al = new String[]{"null"};
-        //Bundle b = new Bundle();
-        //b.putStringArray("myList", al);
 
         Gson gson =  new Gson();
         String value = gson.toJson(al);
@@ -108,11 +119,21 @@ public class MainActivity extends Activity implements EditNameDialog.EditNameDia
 
     @Override
     public boolean onQueryTextSubmit(String s) {
+        displayItems(s);
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public boolean onQueryTextChange(String s) {
+        displayItems(s);
         return false;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    private void  displayItems(String query){
+        DbQueryActivity queries = new DbQueryActivity(getApplicationContext());
+        Cursor cursor = queries.queryGigByName(query,this);
+        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, R.layout.list_row, cursor, FROM, TO,0);
+        setListAdapter(adapter);
+
     }
 }

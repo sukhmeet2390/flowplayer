@@ -17,6 +17,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".activity.CreateActivity"/>
+        <activity android:name=".activity.PlayGigActivity"/>
         <activity android:name=".activity.DbQueryActivity"/>
         <provider android:name=".database.ContentProvider.GigContentProvider"
                   android:authorities="com.example.database.ContentProvider.GigNameContentProvider"/>
