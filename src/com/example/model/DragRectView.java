@@ -17,34 +17,35 @@ public class DragRectView extends ImageView {
 
     Paint paint = new Paint();
 
-    public static int DRAG = 0;
-    public static int DRAW = 1;
-    public static int EXPAND = 2;
-    public static int EXPAND_TYPE = 0;
-    public static int BORDER = 0;
-    public static int CORNER = 1;
+    public static int DRAG;
+    public static int DRAW ;
+    public static int EXPAND ;
+    public static int EXPAND_TYPE;
+    public static int BORDER;
+    public static int CORNER;
     public static int CURRENT_MODE = DRAG;
-    public static int MINIMUM_DISTANCE = 20;
-    public static int EXPAND_BORDER = 0;
-    public static int EXPAND_CORNER = 0;
-    public static int CIRCLE_RADIUS = 5;
-    public static boolean SELECTION_COMPLETE = false;
+    public static int MINIMUM_DISTANCE;
+    public static int EXPAND_BORDER;
+    public static int EXPAND_CORNER;
+    public static int CIRCLE_RADIUS;
+    public static boolean SELECTION_COMPLETE;
 
 
     public DragRectView(Context context, int startX) {
         super(context);
         this.startX = startX;
+        init();
     }
 
     public DragRectView(Context context, AttributeSet attrs) {
         super(context, attrs);
-
         init();
 
     }
 
     public DragRectView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        init();
     }
 
     public int getStartX() {
@@ -218,7 +219,6 @@ public class DragRectView extends ImageView {
         MINIMUM_DISTANCE = 20;
         EXPAND_BORDER = 0;
         EXPAND_CORNER = 0;
-
         CIRCLE_RADIUS = 5;
         SELECTION_COMPLETE = false;
         paint.setColor(Color.rgb(87,151,238));

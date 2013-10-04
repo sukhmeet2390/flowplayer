@@ -1,14 +1,11 @@
 package com.example.activity;
 
-import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -18,16 +15,11 @@ import android.view.View;
 import android.widget.*;
 import com.example.R;
 import com.example.database.ContentProvider.DbHelper;
-import com.example.database.ContentProvider.GigContentProvider;
 import com.example.widgets.EditNameDialog;
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
-
 public class MainActivity extends ListActivity implements EditNameDialog.EditNameDialogListener, SearchView.OnQueryTextListener {
-    /**
-     * Called when the activity is first created.
-     */
+
     private String TAG = "MAIN ACTIVITY";
     static final String[] FROM = {DbHelper.C_NAME};
     static final int[] TO = {R.id.gig_list_name};
@@ -107,7 +99,7 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
     @Override
     public void onFinishEditDialog(String inputText) {
 
-        getContentResolver().insert(GigContentProvider.NAME_URI, com.example.Util.nameToContentValues(inputText));
+        queries.insertName(inputText,getApplicationContext());
         Toast.makeText(getApplicationContext(), "Welcome ! " + inputText + " Created, start adding ", Toast.LENGTH_LONG).show();
 
         Intent createIntent = new Intent(this, CreateActivity.class);

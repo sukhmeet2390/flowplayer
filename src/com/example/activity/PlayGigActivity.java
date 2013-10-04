@@ -111,7 +111,7 @@ public class PlayGigActivity extends Activity {
                     imageView.setImageBitmap(bitmap);
 
                 }else{
-                    Toast.makeText(getApplicationContext(), " THis is the End !!", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(getApplicationContext(), " THis is the End !!", Toast.LENGTH_LONG).show();
                     return true;
                 }
                 return true;

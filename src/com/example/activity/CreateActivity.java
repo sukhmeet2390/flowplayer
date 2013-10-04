@@ -35,25 +35,6 @@ public class CreateActivity extends Activity {
     String gigName;
     DbQueryActivity queries;
 
-    @Override
-    public void onBackPressed() {
-        if (currentImage != null) {
-            getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), -1, -1, -1, -1));
-        }
-
-        childImage = Uri.parse("null");
-
-        // pop form shared preference parent stack
-        String[] newArr = Arrays.copyOfRange(parentStack, 1, parentStack.length);
-        Gson gson = new Gson();
-        String value = gson.toJson(newArr);
-        SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
-        SharedPreferences.Editor e = prefs.edit();
-        e.putString("list", value);
-        e.commit();
-
-        super.onBackPressed();
-    }
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,6 +97,26 @@ public class CreateActivity extends Activity {
         mainActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(mainActivity);
     }
+    @Override
+    public void onBackPressed() {
+        if (currentImage != null) {
+            getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), -1, -1, -1, -1));
+        }
+
+        childImage = Uri.parse("null");
+
+        // pop form shared preference parent stack
+        String[] newArr = Arrays.copyOfRange(parentStack, 1, parentStack.length);
+        Gson gson = new Gson();
+        String value = gson.toJson(newArr);
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
+        SharedPreferences.Editor e = prefs.edit();
+        e.putString("list", value);
+        e.commit();
+
+        super.onBackPressed();
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -127,7 +128,7 @@ public class CreateActivity extends Activity {
         imageView.setImageBitmap(bitmap);
         currentImage = userSelectedImage;
         childImage = Uri.parse("null");
-        queries.updateChildImage(currentImage.toString(), parentStack[0], gigName);
+        queries.updateChildImage(currentImage.toString(), parentStack[0], gigName, getApplicationContext());
     }
 
     /// END OF METHODS //
