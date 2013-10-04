@@ -95,4 +95,13 @@ public class DbQueryActivity extends Activity {
         }
         return null;
     }
+    public String deleteGigNameAndData(long id, Context context){
+        String where = DbHelper.C_ID +" = "+ id;
+        String name = findGigNameById(id, context);
+        context.getContentResolver().delete(GigContentProvider.NAME_URI, where, null);
+        where = DbHelper.C_NAME+"  = '" + name+ "'";
+        context.getContentResolver().delete(GigContentProvider.DATA_URI,where, null);
+        return name;
+    }
+
 }

@@ -7,9 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.nfc.Tag;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,19 +24,46 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
-public class MainActivity extends ListActivity implements EditNameDialog.EditNameDialogListener, SearchView.OnQueryTextListener{
+public class MainActivity extends ListActivity implements EditNameDialog.EditNameDialogListener, SearchView.OnQueryTextListener {
     /**
      * Called when the activity is first created.
      */
     private String TAG = "MAIN ACTIVITY";
     static final String[] FROM = {DbHelper.C_NAME};
     static final int[] TO = {R.id.gig_list_name};
+    DbQueryActivity queries;
+    SimpleCursorAdapter adapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        queries = new DbQueryActivity(getApplicationContext());
         setContentView(R.layout.main);
+        registerForContextMenu(getListView());
         displayItems("");
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);    //To change body of overridden methods use File | Settings | File Templates.
+        getMenuInflater().inflate(R.menu.actions, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        switch (item.getItemId()) {
+            case R.id.deleteItem:
+                long id = info.id;
+                String name = queries.deleteGigNameAndData(id, getApplicationContext());
+                //getListView().invalidate();
+                displayItems("");
+                Toast.makeText(getApplicationContext(), "Deleted " + name, Toast.LENGTH_LONG).show();
+                return true;
+            default:
+                return false;
+        }
+
     }
 
     @Override
@@ -51,13 +80,13 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.createGig:
                 Log.i(TAG, "Create Gig Click");
                 showDialog();
                 break;
             case R.id.home_search:
-                Log.i(TAG,"Search Click");
+                Log.i(TAG, "Search Click");
                 break;
         }
         return super.onOptionsItemSelected(item);
@@ -87,11 +116,11 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
 
         String[] al = new String[]{"null"};
 
-        Gson gson =  new Gson();
+        Gson gson = new Gson();
         String value = gson.toJson(al);
         SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
         SharedPreferences.Editor e = prefs.edit();
-        e.putString("list",value);
+        e.putString("list", value);
         e.commit();
 
         startActivity(createIntent);
@@ -121,11 +150,12 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    private void  displayItems(String query){
+    private void displayItems(String query) {
         DbQueryActivity queries = new DbQueryActivity(getApplicationContext());
-        Cursor cursor = queries.queryGigByName(query,this);
-        SimpleCursorAdapter adapter = new SimpleCursorAdapter(this, R.layout.list_row, cursor, FROM, TO,0);
+        Cursor cursor = queries.queryGigByName(query, getApplicationContext());
+        adapter = new SimpleCursorAdapter(this, R.layout.list_row, cursor, FROM, TO, 0);
         setListAdapter(adapter);
+
 
     }
 }
