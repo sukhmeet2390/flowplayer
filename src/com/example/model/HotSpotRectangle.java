@@ -32,8 +32,4 @@ public class HotSpotRectangle {
     public Uri getGotoImage() {
         return gotoImage;
     }
-
-    public void setGotoImage(Uri gotoImage) {
-        this.gotoImage = gotoImage;
-    }
 }

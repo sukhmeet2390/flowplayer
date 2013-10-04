@@ -2,6 +2,7 @@ package com.example;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -28,14 +29,15 @@ import java.util.ArrayList;
  */
 public class Util {
     private String TAG = "UTIL";
+
     public static ContentValues nameToContentValues(String name) {
         ContentValues values = new ContentValues();
         values.put(DbHelper.C_NAME, name);
         return values;
     }
 
-    public static ContentValues dataToContentValues(String name, String imagePath, String parentImagePath,String childImagePath,
-                                                     int x1, int y1, int x2, int y2) {
+    public static ContentValues dataToContentValues(String name, String imagePath, String parentImagePath, String childImagePath,
+                                                    int x1, int y1, int x2, int y2) {
         ContentValues contentValues = new ContentValues();
 
         contentValues.put(DbHelper.C_NAME, name);
@@ -50,14 +52,16 @@ public class Util {
 
         return contentValues;
     }
+
     public static String[] concat(String[] A, String[] B) {
         int aLen = A.length;
         int bLen = B.length;
-        String[] C= new String[aLen+bLen];
+        String[] C = new String[aLen + bLen];
         System.arraycopy(A, 0, C, 0, aLen);
         System.arraycopy(B, 0, C, aLen, bLen);
         return C;
     }
+
     static public float[] transformCoordinates(float x, float y, ImageView imageView) {
         float[] coordinates = new float[]{x, y};
         Matrix matrix = new Matrix();
@@ -78,6 +82,7 @@ public class Util {
         }
         return uri;
     }
+
     public static ViewScreen valuesToScreen(long id, String name, Uri image, ArrayList<HotSpotRectangle> hotSpotRectangles) {
         ViewScreen screen = new ViewScreen();
         screen.setScreen_id(id);
@@ -86,6 +91,7 @@ public class Util {
         screen.setHotSpotRectangles(hotSpotRectangles);
         return screen;
     }
+
     public static Bitmap decodeSampledBitmap(Uri path, int screenWidth, int screenHeight) {
 
         Log.d("UTIL", " screen width " + screenWidth + " screen Height" + screenHeight);
@@ -104,6 +110,7 @@ public class Util {
         return BitmapFactory.decodeFile(path.toString(), options);
 
     }
+
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
         // Raw height and width of image
         final int height = options.outHeight;
@@ -128,17 +135,17 @@ public class Util {
     public static Bitmap decodeSampledBitmapFromStream(InputStream imageStream, int reqWidth, int reqHeight) {
         byte[] byteArray = new byte[0];
         byte[] buffer = new byte[1024];
-        int length, count=0;
+        int length, count = 0;
         try {
-            while((length = imageStream.read(buffer)) > -1) {
-                if(length != 0) {
-                    if(count + length > byteArray.length) {
-                        byte[] newBuffer = new byte[(count+length) * 2];
+            while ((length = imageStream.read(buffer)) > -1) {
+                if (length != 0) {
+                    if (count + length > byteArray.length) {
+                        byte[] newBuffer = new byte[(count + length) * 2];
                         System.arraycopy(byteArray, 0, newBuffer, 0, count);
                         byteArray = newBuffer;
                     }
                     System.arraycopy(buffer, 0, byteArray, count, length);
-                    count+=length;
+                    count += length;
                 }
             }
             final BitmapFactory.Options options = new BitmapFactory.Options();
@@ -154,4 +161,15 @@ public class Util {
         return null;
     }
 
+    public static Bitmap getSampledBitmap(Uri image, Context context, int viewWidth, int viewHeight) {
+        InputStream is = null;
+        try {
+            is = context.getContentResolver().openInputStream(image);
+
+        } catch (IOException e) {
+            Log.e("TAG", "error while opening file" + image.toString());
+        }
+        Bitmap bitmap = decodeSampledBitmapFromStream(is, viewWidth, viewHeight);
+        return bitmap;
+    }
 }

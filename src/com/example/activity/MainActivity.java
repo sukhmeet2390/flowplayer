@@ -45,7 +45,6 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
         SearchView searchView = new SearchView(MainActivity.this);
         searchView.setOnQueryTextListener(this);
         item.setActionView(searchView);
-
         return true;
 
     }
@@ -60,7 +59,6 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
             case R.id.home_search:
                 Log.i(TAG,"Search Click");
                 break;
-
         }
         return super.onOptionsItemSelected(item);
     }
@@ -68,15 +66,12 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
     private void showDialog() {
         EditNameDialog editNameDialog = new EditNameDialog();
         editNameDialog.show(getFragmentManager(), "text_dialog");
-
     }
-
 
     @Override
     protected void onListItemClick(ListView l, View v, int position, long id) {
-        Log.d(TAG, "ITEM CLICK");
         Intent playIntent = new Intent(this, PlayGigActivity.class);
-        playIntent.putExtra("gig_id", (long) id);
+        playIntent.putExtra("gig_id", id);
         startActivity(playIntent);
     }
 
@@ -85,7 +80,6 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
 
         getContentResolver().insert(GigContentProvider.NAME_URI, com.example.Util.nameToContentValues(inputText));
         Toast.makeText(getApplicationContext(), "Welcome ! " + inputText + " Created, start adding ", Toast.LENGTH_LONG).show();
-        Log.d(TAG,"Created Gig "+ inputText);
 
         Intent createIntent = new Intent(this, CreateActivity.class);
         createIntent.putExtra("name", inputText);
@@ -99,8 +93,6 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
         SharedPreferences.Editor e = prefs.edit();
         e.putString("list",value);
         e.commit();
-
-        //createIntent.putExtras(b);
 
         startActivity(createIntent);
     }
@@ -120,7 +112,7 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
     @Override
     public boolean onQueryTextSubmit(String s) {
         displayItems(s);
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return false;
     }
 
     @Override

@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -18,8 +17,6 @@ import com.example.model.DragRectView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 
 /**
@@ -33,10 +30,10 @@ public class CreateActivity extends Activity {
     private static final String TAG = "CreateGig";
 
     private ImageView imageView;
+    String[] parentStack;
     Uri currentImage, childImage;
     String gigName;
     DbQueryActivity queries;
-    String[] parentStack;
 
     @Override
     public void onBackPressed() {
@@ -46,8 +43,8 @@ public class CreateActivity extends Activity {
 
         childImage = Uri.parse("null");
 
+        // pop form shared preference parent stack
         String[] newArr = Arrays.copyOfRange(parentStack, 1, parentStack.length);
-
         Gson gson = new Gson();
         String value = gson.toJson(newArr);
         SharedPreferences prefs = getApplicationContext().getSharedPreferences("setting", Context.MODE_PRIVATE);
@@ -55,18 +52,16 @@ public class CreateActivity extends Activity {
         e.putString("list", value);
         e.commit();
 
-        super.onBackPressed();    //To change body of overridden methods use File | Settings | File Templates.
+        super.onBackPressed();
     }
 
     public void onCreate(Bundle savedInstanceState) {
-        Log.e(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.create);
+        initVariables();
 
         Bundle extras = getIntent().getExtras();
-        initVariables();
         gigName = extras.getString("name");
-
     }
 
     @Override
@@ -76,15 +71,12 @@ public class CreateActivity extends Activity {
         GsonBuilder gsonBuilder = new GsonBuilder();
         Gson gson = gsonBuilder.create();
         parentStack = gson.fromJson(value, String[].class);
-
-        Log.d(TAG, "On resume");
         super.onResume();
     }
 
     public void onUploadButtonClick(View view) {
         Log.d(TAG, "Upload Button Click");
         openGallery();
-
     }
 
     public void onNextButtonClicked(View view) {
@@ -99,9 +91,7 @@ public class CreateActivity extends Activity {
 
         getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), x1, y1, x2, y2));
 
-        Intent createActivity = new Intent(this, CreateActivity.class);
-        createActivity.putExtra("name", gigName);
-
+        // update preferences for parent Stack
         String[] newArr = com.example.Util.concat(new String[]{currentImage.toString()}, parentStack);
         Gson gson = new Gson();
         String value = gson.toJson(newArr);
@@ -110,63 +100,34 @@ public class CreateActivity extends Activity {
         e.putString("list", value);
         e.commit();
 
-
-        Bundle b = new Bundle();
-        String[] arr = com.example.Util.concat(new String[]{currentImage.toString()}, parentStack);
-        b.putStringArray("myList", arr);
-        createActivity.putExtras(b);
+        Intent createActivity = new Intent(this, CreateActivity.class);
+        createActivity.putExtra("name", gigName);
         startActivity(createActivity);
     }
 
-    private float[] getTransformedCordinates() {
 
-
-        int x1 = ((DragRectView) imageView).getStartX();
-        int x2 = ((DragRectView) imageView).getEndX();
-        int y1 = ((DragRectView) imageView).getStartY();
-        int y2 = ((DragRectView) imageView).getEndY();
-
-        float[] startCord = com.example.Util.transformCoordinates(x1, y1, imageView);
-        float[] endCord = com.example.Util.transformCoordinates(x2, y2, imageView);
-
-        float[] coordinates = new float[]{startCord[0], startCord[1], endCord[0], endCord[1]};
-        return coordinates;
-
-    }
 
     public void onFinishButtonClicked(View view) {
         Log.d(TAG, "Finish Button Clicked");
         if (currentImage != null) {
             getContentResolver().insert(GigContentProvider.DATA_URI, com.example.Util.dataToContentValues(gigName, currentImage.toString(), parentStack[0], childImage.toString(), -1, -1, -1, -1));
         }
-
         Intent mainActivity = new Intent(this, MainActivity.class);
         mainActivity.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(mainActivity);
-
-
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != Activity.RESULT_OK) return;
         Uri userSelectedImage = data.getData();
-        String userSelectedImagePath = getPath(userSelectedImage);
-        InputStream is = null;
-        try{
-            is = getApplicationContext().getContentResolver().openInputStream(userSelectedImage);
 
-        }catch (IOException e){
-            Log.e("TAG" ,"error while opening file"+userSelectedImagePath);
-        }
-        Bitmap bitmap = com.example.Util.decodeSampledBitmapFromStream(is, imageView.getWidth(),imageView.getHeight());
+        Bitmap bitmap = com.example.Util.getSampledBitmap(userSelectedImage, this, imageView.getWidth(), imageView.getHeight());
+
         imageView.setImageBitmap(bitmap);
-
         currentImage = userSelectedImage;
         childImage = Uri.parse("null");
         queries.updateChildImage(currentImage.toString(), parentStack[0], gigName);
-
-
     }
 
     /// END OF METHODS //
@@ -175,22 +136,12 @@ public class CreateActivity extends Activity {
             Intent imageUploadIntent = new Intent();
             imageUploadIntent.setType("image/*");
             imageUploadIntent.setAction(Intent.ACTION_GET_CONTENT);
-
             startActivityForResult(Intent.createChooser(imageUploadIntent, "Select Picture"), 123); // some random number for id
         } catch (Exception e) {
             Log.e(TAG, e.getMessage());
             e.printStackTrace();
         }
     }
-
-    private String getPath(Uri selectedImageUri) {
-        String[] projection = {MediaStore.Images.Media.DATA};
-        Cursor cursor = managedQuery(selectedImageUri, projection, null, null, null);
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        return cursor.getString(column_index);
-    }
-
 
     private void initVariables() {
         queries = new DbQueryActivity(getApplicationContext());
@@ -199,6 +150,18 @@ public class CreateActivity extends Activity {
         imageView = (ImageView) findViewById(R.id.imageDisplay);
 
     }
+    private float[] getTransformedCordinates() {
+        int x1 = ((DragRectView) imageView).getStartX();
+        int y1 = ((DragRectView) imageView).getStartY();
+        float[] startCord = com.example.Util.transformCoordinates(x1, y1, imageView);
 
+        int x2 = ((DragRectView) imageView).getEndX();
+        int y2 = ((DragRectView) imageView).getEndY();
+        float[] endCord = com.example.Util.transformCoordinates(x2, y2, imageView);
+
+        float[] coordinates = new float[]{startCord[0], startCord[1], endCord[0], endCord[1]};
+        return coordinates;
+
+    }
 
 }

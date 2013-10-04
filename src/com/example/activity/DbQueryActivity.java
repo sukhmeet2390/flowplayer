@@ -33,10 +33,8 @@ public class DbQueryActivity extends Activity {
         super.onCreate(savedInstanceState);
     }
     public boolean updateChildImage(String imagePath, String parentImage, String gigName) {
-        Cursor cursor;
         database = dbHelper.getWritableDatabase();
         String select = "update " + DbHelper.TABLE_DATA + " set child_image = '" + imagePath + "' where image_uri = '" + parentImage + "' and name ='" + gigName + "' and child_image = 'null' ";
-        Log.d(TAG, select);
         if(!parentImage.equals("null")) database.execSQL(select);
         database.close();
         return true;
@@ -51,7 +49,7 @@ public class DbQueryActivity extends Activity {
 
         if (cursor != null) {
             cursor.moveToFirst();
-            return (String) cursor.getString(1).toString();
+            return cursor.getString(1).toString();
         }
         return null;
     }
