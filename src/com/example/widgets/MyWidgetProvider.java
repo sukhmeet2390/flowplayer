@@ -1,4 +1,4 @@
-package com.example; /**
+package com.example.widgets; /**
  * Created with IntelliJ IDEA.
  * User: sukhmeet
  * Date: 07/10/13
@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.RemoteViews;
+import com.example.R;
 import com.example.activity.MainActivity;
 
 public class MyWidgetProvider extends AppWidgetProvider {
@@ -56,7 +57,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
             Intent intent = new Intent(context, MainActivity.class);
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId);
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(context,0,intent,PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context,0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
             RemoteViews remoteViews= new RemoteViews(context.getPackageName(), R.layout.widget);
             remoteViews.setOnClickPendingIntent(R.id.update, pendingIntent);
             appWidgetManager.updateAppWidget(widgetId, remoteViews);
