@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -171,5 +172,14 @@ public class Util {
         }
         Bitmap bitmap = decodeSampledBitmapFromStream(is, viewWidth, viewHeight);
         return bitmap;
+    }
+
+    static public boolean checkConnectivity(Context context) {
+        try {
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            return connectivityManager.getActiveNetworkInfo().isConnectedOrConnecting();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

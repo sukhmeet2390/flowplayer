@@ -14,9 +14,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
 import com.example.R;
+import com.example.VersionManager;
 import com.example.database.ContentProvider.DbHelper;
 import com.example.widgets.EditNameDialog;
 import com.google.gson.Gson;
+import org.json.JSONException;
+
+import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends ListActivity implements EditNameDialog.EditNameDialogListener, SearchView.OnQueryTextListener {
 
@@ -25,14 +29,26 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
     static final int[] TO = {R.id.gig_list_name};
     DbQueryActivity queries;
     SimpleCursorAdapter adapter;
+    VersionManager versionManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i("VERSIONMANAGERCHECK", "MainOnCreate");
         super.onCreate(savedInstanceState);
         queries = new DbQueryActivity(getApplicationContext());
+
+        registerForUpdates();
+
         setContentView(R.layout.main);
         registerForContextMenu(getListView());
         displayItems("");
+    }
+
+    private void registerForUpdates() {
+        Log.i("VERSIONMANAGERCHECK", "Start");
+        this.versionManager = new VersionManager(getApplicationContext(), this);
+        versionManager.setVersionCheckUrl("https://raw.github.com/sukhmeet2390/hello_android/master/version.txt");
+        versionManager.checkNewVersion();
     }
 
     @Override
@@ -99,7 +115,7 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
     @Override
     public void onFinishEditDialog(String inputText) {
 
-        queries.insertName(inputText,getApplicationContext());
+        queries.insertName(inputText, getApplicationContext());
         Toast.makeText(getApplicationContext(), "Welcome ! " + inputText + " Created, start adding ", Toast.LENGTH_LONG).show();
 
         Intent createIntent = new Intent(this, CreateActivity.class);
@@ -143,6 +159,7 @@ public class MainActivity extends ListActivity implements EditNameDialog.EditNam
     }
 
     private void displayItems(String query) {
+        Log.i("VERSIONMANAGERCHECK", "DisplayItems");
         DbQueryActivity queries = new DbQueryActivity(getApplicationContext());
         Cursor cursor = queries.queryGigByName(query, getApplicationContext());
         adapter = new SimpleCursorAdapter(this, R.layout.list_row, cursor, FROM, TO, 0);
